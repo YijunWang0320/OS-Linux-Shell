@@ -11,7 +11,7 @@ char* getCommand(int* inputLen);
 char buffer[BUFFER];
 int main()
 {
-	char* command;
+	char* command=NULL;
         int commandLen=0;
         int result=0;
 	while(1){
@@ -25,6 +25,15 @@ int main()
    	}
         
 }
+int my_cmp(char* one)
+{	
+	printf("%d",strlen(one));
+	if(strlen(one)==4){
+		if(one[0]=='e' && one[1]=='x' && one[2]=='i' && one[3]=='t')
+			return 0;
+	}
+	return 1;
+}
 int parse(char* cmd)
 {
 	char cmdBuffer[1024];
@@ -36,21 +45,31 @@ int parse(char* cmd)
 	if(cmd==NULL)
 		return 1;
         cur=cmd[0];
-	while(cur!=' '){
+	while(cur!=' ' &&  cur!='\0'){
 		cmdBuffer[start]=cmd[start];
-		cur=cmdBuffer[start];
+		cur=cmdBuffer[start+1];
 		start++;
 	}	
 	cmdBuffer[start]='\0';
 	while(cmd[start]==' '){
 		start++;
  	}
+	if(my_cmp(cmdBuffer)==0){
+		return 0;
+	}
 	int i=0;
 	int flag=0;
 	while(cmd[start]!='\0'){
 		if(cmd[start]!=' '){
  			cur=cmd[start++];
 			tmpArg[i++]=cur;
+		}
+		if(cmd[start]=='\0'){
+			tmpArg[i]='\0';
+			arg[argnum]=(char*)malloc(sizeof(char)*(i+1));
+			strcpy(arg[argnum],tmpArg);
+			argnum++;
+			continue;
 		}
 		if(cmd[start]==' ')
 		{
@@ -70,10 +89,10 @@ int parse(char* cmd)
 	printf("%s",cmdBuffer);
 	int j=0;
 	while(arg[j]!=NULL){
-		printf("%s",arg[j]);
+		printf("%s\n",arg[j]);
 		j++;
 	}
-        return 0;
+        return 1;
 }
 char* getCommand(int *inputLen)
 {
