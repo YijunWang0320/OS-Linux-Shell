@@ -1,5 +1,5 @@
   The programming part contains makefile,shell.h,shell.c,testcase and this README.
-  The non-programming part contains only one file called nonprog-homework1.
+  The non-programming part contains only one file called written.txt.
   The shell can pass all of the testcase in the python script, and the testcase that I tried.I used checkpatch to test my program, all of the errors and warnings are handled. 
 Reliability:
 	Reliable in all cases that I've tested,but there are commands that I did not test.
