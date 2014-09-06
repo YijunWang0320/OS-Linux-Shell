@@ -5,6 +5,7 @@
 #include<errno.h>
 #include<unistd.h>
 #include<stdio.h>
+#include<sys/wait.h>
 #define BUFFER 1024
 #define PIPE_READ 0
 #define PIPE_WRITE 1
@@ -187,7 +188,6 @@ int doCommand(char *cmd, char **arg)
 }
 int dopath(char *cmd, char **arg)
 {
-	int i = 0;
 	struct pathlist *tmp, *pre;
 	int len;
 
@@ -255,7 +255,7 @@ int dopath(char *cmd, char **arg)
 			if (strcmp(tmp->next->pathname, arg[2]) == 0) {
 				pre = tmp->next;
 				tmp->next = tmp->next->next;
-				free(tmp->next);
+				free(pre);
 				pathnumber--;
 				return 1;
 			}
@@ -320,7 +320,8 @@ int PipeCommand(char **arg, int start, int place, int end, int in_fd)
 	int pid = fork();
 
 	if (pid == 0) {
-		doPipeCommand(arg, start, place, end, in_fd);
+		retValue=doPipeCommand(arg, start, place, end, in_fd);
+		return retValue;
 	} else if (pid > 0) {
 		wait(0);
 		return 1;
@@ -387,6 +388,7 @@ int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 				 place, end, pfds[PIPE_READ]);
 		}
 	}
+	return 0;
 }
 void errorHandler(void)
 {
