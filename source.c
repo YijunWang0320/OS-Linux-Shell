@@ -8,6 +8,7 @@
 #define BUFFER 1024
 int parse(char* cmd);
 char* getCommand(int* inputLen);
+int doCommend(char *cmd,char **arg);
 char buffer[BUFFER];
 int main()
 {
@@ -25,15 +26,6 @@ int main()
    	}
         
 }
-int my_cmp(char* one)
-{	
-	printf("%d",strlen(one));
-	if(strlen(one)==4){
-		if(one[0]=='e' && one[1]=='x' && one[2]=='i' && one[3]=='t')
-			return 0;
-	}
-	return 1;
-}
 int parse(char* cmd)
 {
 	char cmdBuffer[1024];
@@ -47,14 +39,14 @@ int parse(char* cmd)
         cur=cmd[0];
 	while(cur!=' ' &&  cur!='\0'){
 		cmdBuffer[start]=cmd[start];
-		cur=cmdBuffer[start+1];
+		cur=cmd[start+1];
 		start++;
 	}	
 	cmdBuffer[start]='\0';
 	while(cmd[start]==' '){
 		start++;
  	}
-	if(my_cmp(cmdBuffer)==0){
+	if(strcmp(cmdBuffer,"exit")==0){
 		return 0;
 	}
 	int i=0;
@@ -86,13 +78,15 @@ int parse(char* cmd)
 		}
 	}
 	arg[argnum]=NULL;
-	printf("%s",cmdBuffer);
+	/*printf("%s\n",cmdBuffer);
 	int j=0;
 	while(arg[j]!=NULL){
 		printf("%s\n",arg[j]);
 		j++;
-	}
-        return 1;
+	}*/
+        int ret=doCommand(cmdBuffer,arg);
+        return ret;
+
 }
 char* getCommand(int *inputLen)
 {
@@ -120,5 +114,20 @@ char* getCommand(int *inputLen)
 	memset(buffer,0,BUFFER);
 	return tmp;
 }
-
+int doCommand(char *cmd,char **arg)
+{
+    	int pid;
+	int rtValue=1;
+    	pid=fork();
+	if(pid=0){
+		rtValue=execv(cmd,arg);	
+	}
+	else if(pid>0){
+		wait(0);
+	}
+	else{
+		return -1;
+	}
+	return rtValue;
+}
 
