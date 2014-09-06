@@ -113,7 +113,7 @@ int parse(char *cmd)
 			flag = 0;
 		}
 		if (flag == 10) {
-			printf("error: two pipes together is not allowed");
+			printf("error: two pipes together is not allowed\n");
 			return 1;
 		}
 		ret = PipeCommand(arg, 0, j, argnum, STDIN_FILENO);
@@ -259,10 +259,11 @@ int dopath(char *cmd, char **arg)
 				pathnumber--;
 				return 1;
 			}
+			tmp=tmp->next;
 		}
 		printf("error: path not found\n");
 	} else {
-		printf("error: invalid argument of path command");
+		printf("error: invalid argument of path command\n");
 	}
 	return 1;
 }
@@ -293,7 +294,7 @@ int doexec(char *cmd, char **arg)
 		if (execv(totalCmd, arg) == -1)
 			flag--;
 	}
-	return 0;
+	return -1;
 }
 void fromTo(int from, int to)
 {
@@ -389,5 +390,5 @@ int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 }
 void errorHandler(void)
 {
-	printf("error: %s\n", strerror(errno));
+	printf("error: %s\n", strerror(errno));	
 }
