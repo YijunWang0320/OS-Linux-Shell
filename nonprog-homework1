@@ -1,0 +1,24 @@
+1.How would you design a system to run an entire operating system as an application on top of another operating system?
+
+  I believe the system refered in this question is similar to virtual machine that I'm using right now.
+  I call the upper OS as the "guest OS",and the actual OS as the "host OS"(like the textbook). There are properties that the system should have:
+  1.The guest OS should make the user feel that it is like the same OS.
+  2.The guest OS should run on user-level because this is only an normal application.This means that the guest OS should not directly manipulates the hardwares.
+  3.The host OS should support the instructions coming from the guest OS just like the hardwares support the host OS.
+  With my thought and the knowledge coming from Chapter2 of the textbook, I believe the system should work like this:
+  1. The applications running on the guest OS should not "realize" that they are running on guest OS. The guest OS should not "realize" that they are running on Virtual Machine(VM).
+  2. The VM simulates a virtual disk as a file on the physical disk and the guest OS have access to only that file. Different programs runs as threads in the Virtual Machine's process.(This might not be true because Virtual Machine might run many processes, however this is the simple case)
+  3. The VM have to have its own virtual interrupt timer(the way to decide which process to run) which works when the host OS lets the Virtual Machine run on the processor.
+  4. The guest OS pass on every system call or exception to the host OS.(The bridge should be the VM)
+  5. The host OS should simulates what the system call or exception should do to the guest OS if the guest OS is running on real hardwares.Then the host OS returns the result to the guest OS.
+  So, in a nutshell,the most important part is that,the host OS should simulates what hardwares will do if the guest OS is running on real hardwares.And the VM should make the guest OS believe there are real hardwares supporting it.
+
+2.For the computer you are currently using, how should the operating system designers prioritize among reliability,security,portability, performance and adoption?
+  I think it is impossible for anybody to use a computer which have absolutely no reliability/portability/performance/adoption, I assume that the current system have normal level of all these properties,which means the system is useable.In this situation, I'll prioritize these abilities.
+  I believe for me, reliability is the most important one.Since always crushing will make me desperate. I could be patient if my system is a little slow,or the fact that there aren't much applications(Windows Phone), but I couldn't bear the fact that I have to restart my system once and once again.
+  Performance comes next, since I don't really save the really "secret" data on my computer.
+  Then comes security. If my computer can be affected just by surfing the internet,and the malicious programs could easily do the things they want,then the system is hardly useable.
+  Portability. This characteristic affects adoption.If the portability is bad, then less software developer will build apps on this system, so it would be hard to be adopted by the public. And also, the system programmers would have to make a lot of changes when the hardwares upgrade everytime.
+  Adoptability. Compared to other characteristics, I think this comes last.Because a lot of us still use WP while the adoptability is not that good.
+  
+  

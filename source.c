@@ -85,7 +85,7 @@ int parse(char* cmd)
 		j++;
 	}*/
         int ret=doCommand(cmdBuffer,arg);
-        return ret;
+	return ret;
 
 }
 char* getCommand(int *inputLen)
@@ -118,16 +118,24 @@ int doCommand(char *cmd,char **arg)
 {
     	int pid;
 	int rtValue=1;
-    	pid=fork();
-	if(pid=0){
-		rtValue=execv(cmd,arg);	
+	pid=fork();	
+	if(pid==0){
+		printf("%s\n","child");
+		rtValue=exec();
+		if(rtValue<0)
+			perror("perror");
 	}
 	else if(pid>0){
+		printf("%s\n","parent");
 		wait(0);
 	}
 	else{
-		return -1;
+		perror("perror");
 	}
-	return rtValue;
+	int i;
+	for(i=0;arg[i]!=NULL;i++){
+		free(arg[i]);	
+	}
+	return pid+1;
 }
 
