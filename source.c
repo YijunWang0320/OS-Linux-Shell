@@ -6,13 +6,15 @@
 #include<unistd.h>
 #include<stdio.h>
 #define BUFFER 1024
+#define PIPE_READ 0
+#define PIPE_WRITE 1
 int parse(char* cmd);
 char* getCommand(int* inputLen);
 int doCommand(char *cmd,char **arg);
 int dopath(char *cmd,char **arg);
 int doexec(char *cmd,char **arg);
 int doPipeCommand(char **arg,int start,int place,int endNum);
-int execPipe(char **arg,int startNum,int place,int endNum,int *pdfs);
+int doPipeExec(char **arg,int start,int place,int endNum,int *pfds);
 char buffer[BUFFER];
 char *pathlist[100];
 int pathnumber=0;
@@ -229,71 +231,71 @@ int doexec(char *cmd,char **arg)
 	}
 	return flag-1;
 }
-int doPipeCommand(char **arg,int start,int place,int end)
+int doPipeCommand(char **arg,int start,int place,int endNum)
 {
-	int pdfs[2];
 	int pid;
-	pid=fork();
-	if(pipe(pdfs)==-1){
-		perror("perror");
-		return 1;
-	}	
+	int ret=0;
+	pid=fork();	
 	if(pid>0){
-		close(1);
-		dup2(pdfs[1],1);
-		close(pdfs[0]);
 		wait(0);
+		return 1;
 	}else if(pid==0){
-		int i=0,j=0;
-		return execPipe(arg,start,place,end,pdfs);
+		ret=doPipeExec(arg,start,place,endNum,NULL);
+		if(ret<0){
+			perror("perror");
+			return 0;
+		}
 	}else{
 		perror("perror");
 		return 1;
 	}
 }
-int execPipe(char **arg,int startNum,int place,int endNum,int *pdfs)
+char **putHere(char **arg,int start,int place,int *j)
 {
-	if(place==endNum){
-		close(0);
-		dup2(pdfs[1],1);
-		close(pdfs[0]);
-		return 1;	
-	}	
+	int *tmparg[50];
+	int i=0,(*j)=0;
+	for(i=0;i<place && arg[i]!=NULL;i++){
+		tmparg[(*j)]=(char*)malloc(sizeof(char)*strlen(arg[i]));
+		strcmp(tmparg[(*j)],arg[i]);
+		(*j)++;
+	}
+	tmparg[(*j)]=NULL;
+	return tmparg;
+}
+int doPipeExec(char **arg,int start,int place,int endNum,int *pfds)
+{
+	int newPipe[2];
+        int *tmparg[50];
+	int pid=fork();
+	int ret=0;
 	int i=0,j=0;
-	int rtValue;
-	int pid;
-	char *tmparg[50];
-	pid=fork();
-	if(pid>0){	
-		/*close(0);
-		close(1);
-		dup2(pdfs[0],0);
-		dup2(pdfs[1],1);*/
-		for(i=startNum;i<place;i++){
-			tmparg[j]=(char*)malloc(sizeof(char)*strlen(arg[i]));
-			strcpy(tmparg[j],arg[i]);
-			j++;
-		}
-		tmparg[j]=NULL;
-		rtValue=doexec(tmparg[0],tmparg);
-		if(rtValue<0){
-			for(i=0;tmparg[i]!=NULL;i++)
-				free(tmparg[i]);
+	if(pid==0){	
+		if(pipe(newPipe)==-1){
 			perror("perror");
 			return 1;
 		}
-	}else if(pid==0){
-		int tmpPlace=endNum;
-		j=0;
-		for(i=place+1;i<endNum;i++){
-			if(strcmp(arg[i],"|")==0){
-				tmpPlace=i;
-				break;
-			}
+		
+		if(start==0){
+			close(1);
+			dup2(newPipe[PIPE_WRITE],1);
+			close(newPipe[PIPE_READ]);
+		}else{
+			close(1);
+			close(0);
+			dup2(newPipe[PIPE_WRITE],1);
+			dup2(pfds[PIPE_READ],0);
 		}
-		return execPipe(arg,place+1,tmpPlace,endNum,pdfs);
+			tmparg=putHere(arg,start,place,&j);
+			ret=doexe(tmparg[0],tmparg);
+			if(ret<0){
+				perror("perror");
+			}		
+			return 0;
+	}else if(pid>0){
+		wait(0);
+			
 	}else{
 		perror("perror");
-		return 1;
-	}
+		return 0;
+	}	
 }
