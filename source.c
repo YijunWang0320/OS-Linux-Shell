@@ -13,8 +13,8 @@ char* getCommand(int* inputLen);
 int doCommand(char *cmd,char **arg);
 int dopath(char *cmd,char **arg);
 int doexec(char *cmd,char **arg);
-int doPipeCommand(char **arg,int start,int place,int endNum);
-int doPipeExec(char **arg,int start,int place,int endNum,int *pfds);
+int doPipeCommand(char **arg,int start,int place,int end,int in_fd);
+int PipeCommand(char **arg,int start,int place,int end,int in_fd);
 char buffer[BUFFER];
 char *pathlist[100];
 int pathnumber=0;
@@ -95,12 +95,11 @@ int parse(char* cmd)
 	for(j=0;j<argnum;j++){
 		if(strcmp(arg[j],"|")==0){
 			f=1;
-			break;	
+			break;
 		}
 	}
-	if(f==1)
-	{
-		ret=doPipeCommand(arg,0,j,argnum);
+	if(f==1){
+		ret=PipeCommand(arg,0,j,argnum,STDIN_FILENO);
 		for(i=0;arg[i]!=NULL;i++)
 			free(arg[i]);
 		return ret;
@@ -231,71 +230,88 @@ int doexec(char *cmd,char **arg)
 	}
 	return flag-1;
 }
-int doPipeCommand(char **arg,int start,int place,int endNum)
+static void redirect(int oldfd,int newfd)
 {
-	int pid;
-	int ret=0;
-	pid=fork();	
-	if(pid>0){
-		wait(0);
-		return 1;
-	}else if(pid==0){
-		ret=doPipeExec(arg,start,place,endNum,NULL);
-		if(ret<0){
+	if(oldfd!=newfd){
+		if(dup2(oldfd,newfd)==-1)
 			perror("perror");
-			return 0;
-		}
-	}else{
-		perror("perror");
-		return 1;
+		else
+			close(oldfd);
 	}
 }
-char **putHere(char **arg,int start,int place,int *j)
+int noArgAfter(char **arg,int place,int end)
 {
-	int *tmparg[50];
-	int i=0,(*j)=0;
-	for(i=0;i<place && arg[i]!=NULL;i++){
-		tmparg[(*j)]=(char*)malloc(sizeof(char)*strlen(arg[i]));
-		strcmp(tmparg[(*j)],arg[i]);
-		(*j)++;
-	}
-	tmparg[(*j)]=NULL;
-	return tmparg;
+	int i=0;
+	for(i=place;arg[i]!=NULL;i++)
+		if(strcmp(arg[i],"|")==0)
+			return i;
+	return -1;
 }
-int doPipeExec(char **arg,int start,int place,int endNum,int *pfds)
+int PipeCommand(char **arg,int start,int place,int end,int in_fd)
 {
-	int newPipe[2];
-        int *tmparg[50];
+	int retValue=0;
 	int pid=fork();
-	int ret=0;
-	int i=0,j=0;
 	if(pid==0){	
-		if(pipe(newPipe)==-1){
-			perror("perror");
-			return 1;
-		}
-		
-		if(start==0){
-			close(1);
-			dup2(newPipe[PIPE_WRITE],1);
-			close(newPipe[PIPE_READ]);
-		}else{
-			close(1);
-			close(0);
-			dup2(newPipe[PIPE_WRITE],1);
-			dup2(pfds[PIPE_READ],0);
-		}
-			tmparg=putHere(arg,start,place,&j);
-			ret=doexe(tmparg[0],tmparg);
-			if(ret<0){
-				perror("perror");
-			}		
-			return 0;
+		doPipeCommand(arg,start,place,end,in_fd);
 	}else if(pid>0){
 		wait(0);
-			
+		return 1;
 	}else{
 		perror("perror");
-		return 0;
-	}	
+		return 1;
+	}
 }
+int doPipeCommand(char **arg,int start,int place,int end,int in_fd)
+{
+	int retValue=0;
+	int pid;
+	int i=0,j=0;
+	char *cmds[50];
+	int p;
+	p=noArgAfter(arg,start,end);
+	if(p==-1){
+		redirect(in_fd,STDIN_FILENO);
+		for(i=start;arg[i]!=NULL;i++){
+			cmds[j]=(char*)malloc(sizeof(char)*(strlen(arg[i])+1));
+			strcpy(cmds[j],arg[i]);
+			j++;
+		}
+		cmds[j]=NULL;
+		retValue=doexec(cmds[0],cmds);
+		if(retValue<0){
+			perror("perror");
+			return 0;		
+		}
+	}else{
+		int pfds[2];
+		if(pipe(pfds)==-1){
+			perror("perror");
+			return 0;
+		}
+		pid=fork();
+		if(pid==-1){
+			perror("perror");
+			return 0;
+		}else if(pid==0){	
+			close(pfds[PIPE_READ]);
+			redirect(in_fd,STDIN_FILENO);
+			redirect(pfds[PIPE_WRITE],STDOUT_FILENO);
+			for(i=start;i<p;i++){
+			cmds[j]=
+				(char*)malloc(sizeof(char)*(strlen(arg[i])+1));
+				strcpy(cmds[j],arg[i]);
+				j++;
+			}
+			retValue=doexec(cmds[0],cmds);
+			if(retValue<0){
+				perror("perror");
+				return 0;
+			}
+		}else{
+			close(pfds[PIPE_WRITE]);
+			close(in_fd);
+			return doPipeCommand(arg,p+1,place,end,pfds[PIPE_READ]);
+		}
+	}
+}
+
