@@ -20,6 +20,7 @@ char *pathlist[100];
 int pathnumber=0;
 int main()
 {
+
 	char* command=NULL;
         int commandLen=0;
         int result=0;
@@ -209,8 +210,6 @@ char *putTogether(char* a,char *b)
 	strcpy(totalCmd,a);
 	totalCmd=strcat(totalCmd,"/");
 	totalCmd=strcat(totalCmd,b);
-	printf("%s\n%s\n",a,b);
-	printf("%s",totalCmd);
 	return totalCmd;
 }
 int doexec(char *cmd,char **arg)
@@ -223,17 +222,15 @@ int doexec(char *cmd,char **arg)
 		return ret;
 	}
 	for(i=0;i<pathnumber;i++){
-		if(flag!=pathnumber-i)
-			break;
 		totalCmd=putTogether(pathlist[i],cmd);
 		if(execv(totalCmd,arg)==-1)
 		{
 			flag--;
 		}
 	}
-	return flag-1;
+	return 0;
 }
-static void redirect(int oldfd,int newfd)
+void redirect(int oldfd,int newfd)
 {
 	if(oldfd!=newfd){
 		if(dup2(oldfd,newfd)==-1)
@@ -297,7 +294,6 @@ int doPipeCommand(char **arg,int start,int place,int end,int in_fd)
 			return 0;
 		}else if(pid==0){	
 			close(pfds[PIPE_READ]);
-			printf("%s\n",arg[start]);
 			redirect(in_fd,STDIN_FILENO);
 			redirect(pfds[PIPE_WRITE],STDOUT_FILENO);
 			for(i=start;i<p;i++){
@@ -306,13 +302,15 @@ int doPipeCommand(char **arg,int start,int place,int end,int in_fd)
 				strcpy(cmds[j],arg[i]);
 				j++;
 			}
+			cmds[j]=NULL;
 			retValue=doexec(cmds[0],cmds);
+			
 			if(retValue<0){
+
 				perror("perror");
 				return 0;
 			}
 		}else{
-			wait(pid);
 			close(pfds[PIPE_WRITE]);
 			close(in_fd);
 			return doPipeCommand(arg,p+1,place,end,pfds[PIPE_READ]);
