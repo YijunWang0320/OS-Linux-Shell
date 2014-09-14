@@ -1,0 +1,85 @@
+wangyijun@ubuntu:~/Desktop/hmwk1/hmwk1$ ./w4118_sh
+$ls
+error: No such file or directory
+$clear
+error: No such file or directory
+$     ls
+error: No such file or directory
+$path + /bin
+$ls
+checkpatch.pl  makefile   nonprog-homework1   testcase	w4118_sh.c
+hw1_sample.py  makefile~  nonprog-homework1~  w4118_sh	w4118_sh.c~
+$pwd
+/home/wangyijun/Desktop/hmwk1/hmwk1
+$  pwd
+/home/wangyijun/Desktop/hmwk1/hmwk1
+$ls -l 
+total 216
+-rwxrwxr-x 1 wangyijun wangyijun 149083 Sep 13 08:53 checkpatch.pl
+-rwxrwxr-x 1 wangyijun wangyijun   6354 Sep 13 08:53 hw1_sample.py
+-rw-rw-r-- 1 wangyijun wangyijun     49 Sep 13 19:08 makefile
+-rw-rw-r-- 1 wangyijun wangyijun     44 Sep 13 19:07 makefile~
+-rw-rw-r-- 1 wangyijun wangyijun   6526 Sep 12 08:46 nonprog-homework1
+-rw-rw-r-- 1 wangyijun wangyijun   6526 Sep 12 08:46 nonprog-homework1~
+-rw-rw-r-- 1 wangyijun wangyijun      0 Sep 13 19:04 testcase
+-rwxrwxr-x 1 wangyijun wangyijun  18280 Sep 13 19:09 w4118_sh
+-rw-rw-r-- 1 wangyijun wangyijun   6434 Sep 13 11:08 w4118_sh.c
+-rw-rw-r-- 1 wangyijun wangyijun   6431 Sep 13 11:07 w4118_sh.c~
+$path + /usr/bin
+$path + /usr
+$path
+/bin:/usr/bin:/usr
+$path + /usr/bin 
+error: path exists
+$path
+/bin:/usr/bin:/usr
+$cd ..  
+$ls 
+hmwk1  id_rsa.pub  README.md
+$cd .
+$ls
+hmwk1  id_rsa.pub  README.md
+$cd hmwk1
+$ls
+checkpatch.pl  makefile~	   testcase   w4118_sh.c
+hw1_sample.py  nonprog-homework1   testcase~  w4118_sh.c~
+makefile       nonprog-homework1~  w4118_sh
+$cd /
+$ls
+bin    dev   initrd.img  lost+found  opt   run	 sys  var
+boot   etc   lib	 media	     proc  sbin  tmp  vmlinuz
+cdrom  home  lib64	 mnt	     root  srv	 usr
+$cd /home
+$ls
+wangyijun
+$cd wangyijun
+$ls 
+Desktop    Downloads	     Music     Public	  Videos
+Documents  examples.desktop  Pictures  Templates
+$cd Desktop
+$ls 
+a.c  a.c~  a.out  hmwk1
+$cd hmwk1
+$ls
+hmwk1  id_rsa.pub  README.md
+$cd hmwk1
+$ls
+checkpatch.pl  makefile~	   testcase   w4118_sh.c
+hw1_sample.py  nonprog-homework1   testcase~  w4118_sh.c~
+makefile       nonprog-homework1~  w4118_sh
+$ls -l | wc
+     12     101     728
+$ls -l|wc
+     12     101     728
+$ls | wc
+     11      11     135
+$ls | grep | wc
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+      0       0       0
+$grep | wc
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+      0       0       0
+$exit
+wangyijun@ubuntu:~/Desktop/hmwk1/hmwk1$

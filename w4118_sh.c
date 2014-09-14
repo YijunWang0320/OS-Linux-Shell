@@ -8,330 +8,382 @@
 #define BUFFER 1024
 #define PIPE_READ 0
 #define PIPE_WRITE 1
-int parse(char* cmd);
-char* getCommand(int* inputLen);
-int doCommand(char *cmd,char **arg);
-int dopath(char *cmd,char **arg);
-int doexec(char *cmd,char **arg);
-int doPipeCommand(char **arg,int start,int place,int end,int in_fd);
-int PipeCommand(char **arg,int start,int place,int end,int in_fd);
-void errorHandler();
+int parse(char *cmd);
+char *getCommand(int *inputLen);
+int doCommand(char *cmd, char **arg);
+int dopath(char *cmd, char **arg);
+int doexec(char *cmd, char **arg);
+int doPipeCommand(char **arg, int start, int place, int end, int in_fd);
+int PipeCommand(char **arg, int start, int place, int end, int in_fd);
+void errorHandler(void);
 char buffer[BUFFER];
-char *pathlist[100];
-int pathnumber=0;
-int main()
+int pathnumber = 0;
+struct pathlist {
+	char pathname[300];
+	struct pathlist *next;
+};
+struct pathlist *pathHead;
+int main(void)
 {
+	char *command = NULL;
+	int commandLen = 0;
+	int result = 0;
 
-	char* command=NULL;
-        int commandLen=0;
-        int result=0;
-	while(1){
-        	printf("$");
-		if(command)
+	pathHead = NULL;
+	while (1) {
+		printf("$");
+		if (command)
 			free(command);
-                command = getCommand(&commandLen);
-	        result = parse(command);
-                if(result == 0)
-                	exit(0);
-   	}
+		command = getCommand(&commandLen);
+		result = parse(command);
+		if (result == 0)
+			exit(0);
+	}
 }
-int parse(char* cmd)
+int parse(char *cmd)
 {
 	char cmdBuffer[1024];
 	char tmpArg[1024];
-        char *arg[50];
+	char *arg[50];
 	char cur;
-	int start=0;
-	int argnum=1;
-	if(cmd==NULL)
+	int start = 0;
+	int argnum = 1;
+	int i = 0;
+	int flag = 0;
+
+	if (cmd == NULL)
 		return 1;
-	cur=cmd[0];
-	while(cur!=' ' &&  cur!='\0' && cur!='|'){		
-		cmdBuffer[start]=cmd[start];
-		cur=cmd[start+1];
+	cur = cmd[0];
+	while (cur != ' ' &&  cur != '\0' && cur != '|') {
+		cmdBuffer[start] = cmd[start];
+		cur = cmd[start+1];
 		start++;
 	}
-	cmdBuffer[start]='\0';
-	while(cmd[start]==' ' || cmd[start]=='\t'){
+	cmdBuffer[start] = '\0';
+	while (cmd[start] == ' ' || cmd[start] == '\t')
 		start++;
- 	}
-	arg[0]=(char*)malloc(sizeof(char)*strlen(cmdBuffer));
-	strcpy(arg[0],cmdBuffer);
-	int i=0;
-	int flag=0;
-	while(cmd[start]!='\0'){
-		while(cmd[start]!=' ' && cmd[start]!='\t' 
-			&& cmd[start]!='|'&& cmd[start]!='\0'){
-			tmpArg[i++]=cmd[start++];
-			flag=1;
-		}	
-		if(flag==1){
-			arg[argnum]=(char*)malloc(sizeof(char)*(i+1));
-			tmpArg[i]='\0';
-			strcpy(arg[argnum],tmpArg);
+	arg[0] = (char *)malloc(sizeof(char)*strlen(cmdBuffer));
+	strcpy(arg[0], cmdBuffer);
+	while (cmd[start] != '\0') {
+		while (cmd[start] != ' ' && cmd[start] != '\t'
+			&& cmd[start] != '|' && cmd[start] != '\0') {
+			tmpArg[i++] = cmd[start++];
+			flag = 1;
+		}
+		if (flag == 1) {
+			arg[argnum] = (char *)malloc(sizeof(char)*(i+1));
+			tmpArg[i] = '\0';
+			strcpy(arg[argnum], tmpArg);
 			argnum++;
-			flag=0;
-			i=0;
+			flag = 0;
+			i = 0;
 			continue;
 		}
-		if(cmd[start]=='|'){
-			tmpArg[0]='|';
-			tmpArg[1]='\0';
-			arg[argnum]=(char*)malloc(sizeof(char)*(2));
-			strcpy(arg[argnum],tmpArg);
+		if (cmd[start] == '|') {
+			tmpArg[0] = '|';
+			tmpArg[1] = '\0';
+			arg[argnum] = (char *)malloc(sizeof(char)*(2));
+			strcpy(arg[argnum], tmpArg);
 			argnum++;
 		}
 		start++;
 	}
-	arg[argnum]=NULL;
-	int ret=0;
-	int j=0;
-	int f=0;
-	for(j=0;j<argnum;j++){
-		if(strcmp(arg[j],"|")==0){
-			f=1;
+	arg[argnum] = NULL;
+	int ret = 0;
+	int j = 0;
+	int f = 0;
+
+	for (j = 0; j < argnum; j++) {
+		if (strcmp(arg[j], "|") == 0) {
+			f = 1;
 			break;
 		}
 	}
-	if(f==1){
-		int flag=0;
-		for(f=0;f<argnum;f++){
-			if(strcmp(arg[f],"|")==0 && !flag){
-				flag=1;
+	if (f == 1) {
+		int flag = 0;
+
+		for (f = 0; f < argnum; f++) {
+			if (strcmp(arg[f], "|") == 0 && !flag) {
+				flag = 1;
 				continue;
-			}else if(strcmp(arg[f],"|")==0 && flag){
-				flag=10;
+			} else if (strcmp(arg[f], "|") == 0 && flag) {
+				flag = 10;
 				break;
 			}
-			flag=0;
+			flag = 0;
 		}
-		if(flag==10){
+		if (flag == 10) {
 			printf("error: two pipes together is not allowed");
 			return 1;
 		}
-		ret=PipeCommand(arg,0,j,argnum,STDIN_FILENO);
-		for(i=0;arg[i]!=NULL;i++)
+		ret = PipeCommand(arg, 0, j, argnum, STDIN_FILENO);
+		for (i = 0; arg[i] != NULL; i++)
 			free(arg[i]);
 		return ret;
 	}
-        ret=doCommand(arg[0],arg);
-	for(i=0;arg[i]!=NULL;i++)
+	ret = doCommand(arg[0], arg);
+	for (i = 0; arg[i] != NULL; i++)
 		free(arg[i]);
 	return ret;
 
 }
-char* getCommand(int *inputLen)
+char *getCommand(int *inputLen)
 {
 	char cur;
 	char *tmp;
-	(*inputLen)=0;
-        cur=getchar();
-	if(cur == '\n')
+	(*inputLen) = 0;
+	cur = getchar();
+	if (cur == '\n')
 		return NULL;
-	while(cur == ' ' || cur == '\t'){
-		cur=getchar();
+	while (cur == ' ' || cur == '\t')
+		cur = getchar();
+	while (cur != '\n' && (*inputLen) < BUFFER) {
+		buffer[(*inputLen)++] = cur;
+		cur = getchar();
 	}
-	while(cur!='\n' && (*inputLen)<BUFFER){
-		buffer[(*inputLen)++]=cur;
-		cur=getchar();
-	}
-	if((*inputLen)>=BUFFER){
-		printf("error:cannot process commandline over 1024,please try a shorter one\n");
-		memset(buffer,0,BUFFER);
-		(*inputLen)=0;
+	if ((*inputLen) >= BUFFER) {
+		printf("error: cannot process commandline over 1024,please try a shorter one\n");
+		memset(buffer, 0, BUFFER);
+		(*inputLen) = 0;
 		return NULL;
-	}
-	else
-		buffer[(*inputLen)]='\0';
-	tmp=(char*)malloc(sizeof(char)*((*inputLen)+1));
-	strcpy(tmp,buffer);
-	memset(buffer,0,BUFFER);
+	} else
+		buffer[(*inputLen)] = '\0';
+	tmp = (char *)malloc(sizeof(char)*((*inputLen)+1));
+	strcpy(tmp, buffer);
+	memset(buffer, 0, BUFFER);
 	return tmp;
 }
-int doCommand(char *cmd,char **arg)
+int doCommand(char *cmd, char **arg)
 {
-    	int pid;
-	int rtValue=1;
-	if(strcmp(cmd,"exit")==0){
+	int pid;
+	int rtValue = 1;
+
+	if (strcmp(cmd, "exit") == 0)
 		return 0;
-	}
-	if(strcmp(cmd,"cd")==0){
-		rtValue=chdir(arg[1]);
-		if(rtValue==-1)
+	if (strcmp(cmd, "cd") == 0) {
+		rtValue = chdir(arg[1]);
+		if (rtValue == -1)
 			errorHandler();
 		return 1;
 	}
-	if(strcmp(cmd,"path")==0){
-		rtValue=dopath(cmd,arg);
+	if (strcmp(cmd, "path") == 0) {
+		rtValue = dopath(cmd, arg);
 		return rtValue;
 	}
-	pid=fork();
-	if(pid==0){
-		rtValue=doexec(cmd,arg);
-		if(rtValue<0)
-		{
+	pid = fork();
+	if (pid == 0) {
+		rtValue = doexec(cmd, arg);
+		if (rtValue < 0) {
 			errorHandler();
 			return 0;
 		}
-	}
-	else if(pid>0){
+	} else if (pid > 0) {
 		wait(0);
-	}
-	else{
+	} else {
 		errorHandler();
 		return 1;
 	}
 	return pid+1;
 }
-int dopath(char *cmd,char **arg)
+int dopath(char *cmd, char **arg)
 {
-	int i;
-	if(arg[1]==NULL){
-		for(i=0;i<pathnumber-1;i++){
-			printf("%s:",pathlist[i]);
-		}
-		if(i<pathnumber)
-			printf("%s\n",pathlist[i]);
+	int i = 0;
+	struct pathlist *tmp, *pre;
+
+	tmp = pathHead;
+	if (arg[1] == NULL) {
+		if (pathHead == NULL)
+			return 1;
+		else {
+			while (tmp->next != NULL) {
+				printf("%s:", tmp->pathname);
+				tmp = tmp->next;
+			}
+			printf("%s\n", tmp->pathname);
 		return 1;
-	}else if(strcmp(arg[1],"+")==0){
-		if(arg[2]==NULL){
+		}
+	} else if (strcmp(arg[1], "+") == 0) {
+		if (arg[2] == NULL) {
 			printf("error: please give a path\n");
 			return 1;
 		}
-		pathlist[pathnumber]=
-			(char*)malloc(sizeof(char)*strlen(arg[2]));
-		strcpy(pathlist[pathnumber],arg[2]);
-		pathnumber++;
-		return 1;
-	}else if(strcmp(arg[1],"-")==0){
-		if(arg[2]==NULL){
+		if (pathHead == NULL) {
+			pathHead =
+				(struct pathlist *)malloc(sizeof(struct pathlist));
+			strcpy(pathHead->pathname, arg[2]);
+			pathHead->next = NULL;
+			pathnumber++;
+		} else {
+			tmp = pathHead;
+			while (tmp->next != NULL) {
+				if (strcmp(tmp->pathname, arg[2]) == 0) {
+					printf("error: path exists\n");
+					return 1;
+				}
+				tmp = tmp->next;
+			}
+			if (strcmp(tmp->pathname, arg[2]) == 0) {
+				printf("error: path exists\n");
+				return 1;
+			}
+			tmp->next =
+				(struct pathlist *)malloc(sizeof(struct pathlist));
+			tmp = tmp->next;
+			strcpy(tmp->pathname, arg[2]);
+			tmp->next = NULL;
+			pathnumber++;
+		}
+	} else if (strcmp(arg[1], "-") == 0) {
+		if (arg[2] == NULL) {
 			printf("error: please give a path\n");
 			return 1;
 		}
-		pathnumber--;
-		free(pathlist[pathnumber]);
-		pathlist[pathnumber]=NULL;
-		return 1;
-	}else{
-		printf("error:please check your argument\n");
-		return 1;
+		if (pathHead == NULL) {
+			printf("error: path not found\n");
+			return 1;
+		}
+		if (strcmp(pathHead->pathname, arg[2]) == 0) {
+			tmp = pathHead;
+			pathHead = pathHead->next;
+			free(tmp);
+			pathnumber--;
+			return 1;
+		}
+		tmp = pathHead;
+		while (tmp->next != NULL) {
+			if (strcmp(tmp->next->pathname, arg[2]) == 0) {
+				pre = tmp->next;
+				tmp->next = tmp->next->next;
+				free(tmp->next);
+				pathnumber--;
+				return 1;
+			}
+		}
+		printf("error: path not found\n");
+	} else {
+		printf("error: invalid argument of path command");
 	}
+	return 1;
 }
-char *putTogether(char* a,char *b)
+char *putTogether(char *a, char *b)
 {
-	int lena=strlen(a);
-	int lenb=strlen(b);
-	char *totalCmd=(char*)malloc(sizeof(char)*(lena+lenb+1));
-	strcpy(totalCmd,a);
-	totalCmd=strcat(totalCmd,"/");
-	totalCmd=strcat(totalCmd,b);
+	int lena = strlen(a);
+	int lenb = strlen(b);
+	char *totalCmd = (char *)malloc(sizeof(char)*(lena+lenb+1));
+
+	strcpy(totalCmd, a);
+	totalCmd = strcat(totalCmd, "/");
+	totalCmd = strcat(totalCmd, b);
 	return totalCmd;
 }
-int doexec(char *cmd,char **arg)
+int doexec(char *cmd, char **arg)
 {
 	char *totalCmd;
-	int flag=pathnumber;
-	int i=0;
-	int ret=execv(cmd,arg);
-	if(ret<0 && pathnumber==0){
+	struct pathlist *tmp = pathHead;
+	int flag = pathnumber;
+	int i = 0;
+	int ret = execv(cmd, arg);
+
+	if (ret < 0 && pathnumber == 0)
 		return ret;
-	}
-	for(i=0;i<pathnumber;i++){
-		totalCmd=putTogether(pathlist[i],cmd);
-		if(execv(totalCmd,arg)==-1)
-		{
+	for (i = 0; i < pathnumber && tmp != NULL; i++) {
+		totalCmd = putTogether(tmp->pathname, cmd);
+		tmp = tmp->next;
+		if (execv(totalCmd, arg) == -1)
 			flag--;
-		}
 	}
 	return 0;
 }
-void redirect(int oldfd,int newfd)
+void redirect(int oldfd, int newfd)
 {
-	if(oldfd!=newfd){
-		if(dup2(oldfd,newfd)==-1)
+	if (oldfd != newfd) {
+		if (dup2(oldfd, newfd) == -1)
 			errorHandler();
 		else
 			close(oldfd);
 	}
 }
-int noArgAfter(char **arg,int place,int end)
+int noArgAfter(char **arg, int place, int end)
 {
-	int i=0;
-	for(i=place;arg[i]!=NULL;i++)
-		if(strcmp(arg[i],"|")==0)
+	int i = 0;
+
+	for (i = place; arg[i] != NULL; i++)
+		if (strcmp(arg[i], "|") == 0)
 			return i;
 	return -1;
 }
-int PipeCommand(char **arg,int start,int place,int end,int in_fd)
+int PipeCommand(char **arg, int start, int place, int end, int in_fd)
 {
-	int retValue=1;
-	int pid=fork();
-	if(pid==0){
-		doPipeCommand(arg,start,place,end,in_fd);
-	}else if(pid>0){
+	int retValue = 1;
+	int pid = fork();
+
+	if (pid == 0) {
+		doPipeCommand(arg, start, place, end, in_fd);
+	} else if (pid > 0) {
 		wait(0);
 		return 1;
-	}else{
+	} else {
 		errorHandler();
 		return 1;
 	}
 }
-int doPipeCommand(char **arg,int start,int place,int end,int in_fd)
+int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 {
-	int retValue=0;
+	int retValue = 0;
 	int pid;
-	int i=0,j=0;
+	int i = 0, j = 0;
 	char *cmds[50];
 	int p;
-	p=noArgAfter(arg,start,end);
-	if(p==-1){
-		redirect(in_fd,STDIN_FILENO);
-		for(i=start;arg[i]!=NULL;i++){
-			cmds[j]=(char*)malloc(sizeof(char)*(strlen(arg[i])+1));
-			strcpy(cmds[j],arg[i]);
+
+	p = noArgAfter(arg, start, end);
+	if (p == -1) {
+		redirect(in_fd, STDIN_FILENO);
+		for (i = start; arg[i] != NULL; i++) {
+			cmds[j] = (char *)malloc(sizeof(char)*(strlen(arg[i])+1));
+			strcpy(cmds[j], arg[i]);
 			j++;
 		}
-		cmds[j]=NULL;
-		retValue=doexec(cmds[0],cmds);
-		if(retValue<0){
+		cmds[j] = NULL;
+		retValue = doexec(cmds[0], cmds);
+		if (retValue < 0) {
 			errorHandler();
 			return 0;
 		}
-	}else{
+	} else {
 		int pfds[2];
-		if(pipe(pfds)==-1){
+
+		if (pipe(pfds) == -1) {
 			errorHandler();
 			return 0;
 		}
-		pid=fork();
-		if(pid==-1){
+		pid = fork();
+		if (pid == -1) {
 			errorHandler();
 			return 0;
-		}else if(pid==0){
+		} else if (pid == 0) {
 			close(pfds[PIPE_READ]);
-			redirect(in_fd,STDIN_FILENO);
-			redirect(pfds[PIPE_WRITE],STDOUT_FILENO);
-			for(i=start;i<p;i++){
-			cmds[j]=
-				(char*)malloc(sizeof(char)*(strlen(arg[i])+1));
-				strcpy(cmds[j],arg[i]);
+			redirect(in_fd, STDIN_FILENO);
+			redirect(pfds[PIPE_WRITE], STDOUT_FILENO);
+			for (i = start; i < p; i++) {
+				cmds[j] = (char *)malloc(sizeof(char)*(strlen(arg[i])+1));
+				strcpy(cmds[j], arg[i]);
 				j++;
 			}
-			cmds[j]=NULL;
-			retValue=doexec(cmds[0],cmds);
-			if(retValue<0){
-
+			cmds[j] = NULL;
+			retValue = doexec(cmds[0], cmds);
+			if (retValue < 0) {
 				errorHandler();
 				return 0;
 			}
-		}else{
+		} else {
 			close(pfds[PIPE_WRITE]);
 			close(in_fd);
-			return doPipeCommand(arg,p+1,place,end,pfds[PIPE_READ]);
+			return doPipeCommand(arg, p+1,
+				 place, end, pfds[PIPE_READ]);
 		}
 	}
 }
-void errorHandler()
+void errorHandler(void)
 {
-	printf("error: %s\n",strerror(errno));
+	printf("error: %s\n", strerror(errno));
 }
