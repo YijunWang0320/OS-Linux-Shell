@@ -142,7 +142,7 @@ char *getCommand(int *inputLen)
 		cur = getchar();
 	}
 	if ((*inputLen) >= BUFFER) {
-		printf("error: cannot process commandline over 1024,please try a shorter one\n");
+		printf("error: cannot process commandline over 1024\n");
 		memset(buffer, 0, BUFFER);
 		(*inputLen) = 0;
 		return NULL;
@@ -189,6 +189,7 @@ int dopath(char *cmd, char **arg)
 {
 	int i = 0;
 	struct pathlist *tmp, *pre;
+	int len;
 
 	tmp = pathHead;
 	if (arg[1] == NULL) {
@@ -208,8 +209,8 @@ int dopath(char *cmd, char **arg)
 			return 1;
 		}
 		if (pathHead == NULL) {
-			pathHead =
-				(struct pathlist *)malloc(sizeof(struct pathlist));
+			len = sizeof(struct pathlist);
+			pathHead = (struct pathlist *)malloc(len);
 			strcpy(pathHead->pathname, arg[2]);
 			pathHead->next = NULL;
 			pathnumber++;
@@ -226,8 +227,8 @@ int dopath(char *cmd, char **arg)
 				printf("error: path exists\n");
 				return 1;
 			}
-			tmp->next =
-				(struct pathlist *)malloc(sizeof(struct pathlist));
+			len = sizeof(struct pathlist);
+			tmp->next = (struct pathlist *)malloc(len);
 			tmp = tmp->next;
 			strcpy(tmp->pathname, arg[2]);
 			tmp->next = NULL;
@@ -294,13 +295,13 @@ int doexec(char *cmd, char **arg)
 	}
 	return 0;
 }
-void redirect(int oldfd, int newfd)
+void fromTo(int from, int to)
 {
-	if (oldfd != newfd) {
-		if (dup2(oldfd, newfd) == -1)
+	if (from != to) {
+		if (dup2(from, to) == -1)
 			errorHandler();
 		else
-			close(oldfd);
+			close(from);
 	}
 }
 int noArgAfter(char **arg, int place, int end)
@@ -334,12 +335,14 @@ int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 	int i = 0, j = 0;
 	char *cmds[50];
 	int p;
+	int len;
 
 	p = noArgAfter(arg, start, end);
 	if (p == -1) {
-		redirect(in_fd, STDIN_FILENO);
+		fromTo(in_fd, STDIN_FILENO);
 		for (i = start; arg[i] != NULL; i++) {
-			cmds[j] = (char *)malloc(sizeof(char)*(strlen(arg[i])+1));
+			len = strlen(arg[i]+1);
+			cmds[j] = (char *)malloc(sizeof(char)*len);
 			strcpy(cmds[j], arg[i]);
 			j++;
 		}
@@ -362,10 +365,11 @@ int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 			return 0;
 		} else if (pid == 0) {
 			close(pfds[PIPE_READ]);
-			redirect(in_fd, STDIN_FILENO);
-			redirect(pfds[PIPE_WRITE], STDOUT_FILENO);
+			fromTo(in_fd, STDIN_FILENO);
+			fromTo(pfds[PIPE_WRITE], STDOUT_FILENO);
 			for (i = start; i < p; i++) {
-				cmds[j] = (char *)malloc(sizeof(char)*(strlen(arg[i])+1));
+				len = strlen(arg[i]+1);
+				cmds[j] = (char *)malloc(sizeof(char)*len);
 				strcpy(cmds[j], arg[i]);
 				j++;
 			}

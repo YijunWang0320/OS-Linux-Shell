@@ -1,0 +1,23 @@
+  The programming part contains makefile,w4118_sh.c,testcase and this README.
+  The non-programming part contains only one file called nonprog-homework1.
+  The shell can pass all of the testcase in the python script, and the testcase that I tried.I used checkpatch to test my program, most of the errors and warnings are handled. Ten warnings are left, mostly tell me about externs should be in another file, however I remembered the professor said that this time the externs would not count as a problem, so I left these warnings to make my files look simpler.
+  
+Reliability:
+	Reliable in all cases that I've tested,but there are commands that I 		did not test.
+Code Simplicity:
+	Not so good, handling the last programming problem requires recurrent 		techniques. However I did not implement the shell using recurrent 		techniques at first. So to make the code simple, I should have delele 		most of the code that I wrote and start from the beginning. However, to 	prevent the situation that I failed to handle the last problem and 		finally blowing up the first three, I handle pipe commands in a new 		function. 
+Assumptions:
+	1. Whitespaces only include ' ' and '\t'.
+	2. Most commands are seperated by whitespaces, except two commands 		seperated by pipe.
+	3. Pipes should be used between commands, the situation where "ls | "is 	not used.
+	4. We can accept inputs no longer than 1024 characters. If inputs are 		longer then this, an error will come up telling you the fact.
+Cite(only the useful ones):
+	1.http://www.cnblogs.com/wchhuangya/archive/2009/12/24/1631121.html
+	2.http://stackoverflow.com/questions/21307013/recursive-piping-in-unix- 	again
+	3.http://codereview.stackexchange.com/questions/13400/
+	recursion-using- pipes
+	4.http://linux.chinaunix.net/techdoc/develop/2008/02/21/979889.shtml
+	5.http://www.linuxquestions.org/questions/programming-9/
+	how-to-read-	buffer-in-c-564863/page2.html
+	6.http://stackoverflow.com/questions/21332970/
+	pipe-with-fork-with-recursion-file-descriptors-handling
