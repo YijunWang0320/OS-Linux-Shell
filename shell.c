@@ -1,5 +1,6 @@
 /*homework1 for os*/
 /* Wang Yijun */
+/*
 #include<stdlib.h>
 #include<string.h>
 #include<errno.h>
@@ -17,6 +18,8 @@ int doexec(char *cmd, char **arg);
 int doPipeCommand(char **arg, int start, int place, int end, int in_fd);
 int PipeCommand(char **arg, int start, int place, int end, int in_fd);
 void errorHandler(void);
+*/
+#include"shell.h"
 char buffer[BUFFER];
 int pathnumber = 0;
 struct pathlist {
@@ -147,8 +150,8 @@ char *getCommand(int *inputLen)
 		memset(buffer, 0, BUFFER);
 		(*inputLen) = 0;
 		return NULL;
-	} else
-		buffer[(*inputLen)] = '\0';
+	}
+	buffer[(*inputLen)] = '\0';
 	tmp = (char *)malloc(sizeof(char)*((*inputLen)+1));
 	strcpy(tmp, buffer);
 	memset(buffer, 0, BUFFER);
@@ -195,14 +198,12 @@ int dopath(char *cmd, char **arg)
 	if (arg[1] == NULL) {
 		if (pathHead == NULL)
 			return 1;
-		else {
-			while (tmp->next != NULL) {
-				printf("%s:", tmp->pathname);
-				tmp = tmp->next;
-			}
-			printf("%s\n", tmp->pathname);
-		return 1;
+		while (tmp->next != NULL) {
+			printf("%s:", tmp->pathname);
+			tmp = tmp->next;
 		}
+		printf("%s\n", tmp->pathname);
+		return 1;
 	} else if (strcmp(arg[1], "+") == 0) {
 		if (arg[2] == NULL) {
 			printf("error: please give a path\n");
@@ -259,7 +260,7 @@ int dopath(char *cmd, char **arg)
 				pathnumber--;
 				return 1;
 			}
-			tmp=tmp->next;
+			tmp = tmp->next;
 		}
 		printf("error: path not found\n");
 	} else {
@@ -320,15 +321,14 @@ int PipeCommand(char **arg, int start, int place, int end, int in_fd)
 	int pid = fork();
 
 	if (pid == 0) {
-		retValue=doPipeCommand(arg, start, place, end, in_fd);
+		retValue = doPipeCommand(arg, start, place, end, in_fd);
 		return retValue;
 	} else if (pid > 0) {
 		wait(0);
 		return 1;
-	} else {
-		errorHandler();
-		return 1;
 	}
+	errorHandler();
+	return 1;
 }
 int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 {
@@ -392,5 +392,5 @@ int doPipeCommand(char **arg, int start, int place, int end, int in_fd)
 }
 void errorHandler(void)
 {
-	printf("error: %s\n", strerror(errno));	
+	printf("error: %s\n", strerror(errno));
 }
