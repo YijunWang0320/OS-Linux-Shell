@@ -9,7 +9,7 @@ Assumptions:
 	1. Whitespaces only include ' ' and '\t'.
 	2. Most commands are seperated by whitespaces, except two commands seperated by pipe.
 	3. Pipes should be used between commands, the situation where "ls | "is not used.
-	4. We can accept inputs no longer than 1024 characters. If inputs are longer then this, an error will come up telling you the fact.
+	4. The console can accept input characters at any length. But there shouldn't be more than 49 arguments.(including the commands and pipes)
 Cite(only the really  useful ones):
 	1.http://www.cnblogs.com/wchhuangya/archive/2009/12/24/1631121.html
 	2.http://stackoverflow.com/questions/21307013/recursive-piping-in-unix-again

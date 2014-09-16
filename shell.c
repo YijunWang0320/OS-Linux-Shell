@@ -20,13 +20,13 @@ int PipeCommand(char **arg, int start, int place, int end, int in_fd);
 void errorHandler(void);
 */
 #include"shell.h"
-char buffer[BUFFER];
 int pathnumber = 0;
 struct pathlist {
 	char pathname[300];
 	struct pathlist *next;
 };
 struct pathlist *pathHead;
+
 int main(void)
 {
 	char *command = NULL;
@@ -39,15 +39,15 @@ int main(void)
 		if (command)
 			free(command);
 		command = getCommand(&commandLen);
-		result = parse(command);
+		result = parse(command, commandLen);
 		if (result == 0)
 			exit(0);
 	}
 }
-int parse(char *cmd)
+int parse(char *cmd, int commandLen)
 {
-	char cmdBuffer[1024];
-	char tmpArg[1024];
+	char *cmdBuffer;
+	char *tmpArg;
 	char *arg[50];
 	char cur;
 	int start = 0;
@@ -55,6 +55,8 @@ int parse(char *cmd)
 	int i = 0;
 	int flag = 0;
 
+	cmdBuffer = (char *)malloc(sizeof(char)*commandLen);
+	tmpArg = (char *)malloc(sizeof(char)*commandLen);
 	if (cmd == NULL)
 		return 1;
 	cur = cmd[0];
@@ -135,26 +137,37 @@ char *getCommand(int *inputLen)
 {
 	char cur;
 	char *tmp;
+	char *buffer;
+	int times = 1;
+
+	buffer = (char *)malloc(sizeof(char)*BUFFER);
 	(*inputLen) = 0;
 	cur = getchar();
 	if (cur == '\n')
 		return NULL;
 	while (cur == ' ' || cur == '\t')
 		cur = getchar();
-	while (cur != '\n' && (*inputLen) < BUFFER) {
-		buffer[(*inputLen)++] = cur;
-		cur = getchar();
+	while (cur != '\n') {
+		if ((*inputLen) < BUFFER*times) {
+			buffer[(*inputLen)++] = cur;
+			cur = getchar();
+		} else {
+			times = times*2;
+			buffer = realloc(buffer, BUFFER*times);
+			buffer[(*inputLen)++] = cur;
+			cur = getchar();
+		}
 	}
-	if ((*inputLen) >= BUFFER) {
+	/*if ((*inputLen) >= BUFFER) {
 		printf("error: cannot process commandline over 1024\n");
 		memset(buffer, 0, BUFFER);
 		(*inputLen) = 0;
 		return NULL;
-	}
+	}*/
 	buffer[(*inputLen)] = '\0';
 	tmp = (char *)malloc(sizeof(char)*((*inputLen)+1));
 	strcpy(tmp, buffer);
-	memset(buffer, 0, BUFFER);
+	free(buffer);
 	return tmp;
 }
 int doCommand(char *cmd, char **arg)

@@ -7,7 +7,7 @@
 #define BUFFER 1024
 #define PIPE_READ 0
 #define PIPE_WRITE 1
-int parse(char *cmd);
+int parse(char *cmd, int commandLen);
 char *getCommand(int *inputLen);
 int doCommand(char *cmd, char **arg);
 int dopath(char *cmd, char **arg);
