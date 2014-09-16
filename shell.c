@@ -22,7 +22,7 @@ void errorHandler(void);
 #include"shell.h"
 int pathnumber = 0;
 struct pathlist {
-	char pathname[300];
+	char *pathname;
 	struct pathlist *next;
 };
 struct pathlist *pathHead;
@@ -225,6 +225,8 @@ int dopath(char *cmd, char **arg)
 		if (pathHead == NULL) {
 			len = sizeof(struct pathlist);
 			pathHead = (struct pathlist *)malloc(len);
+			len = strlen(arg[2]);
+			pathHead->pathname = (char *)malloc(sizeof(char)*len);
 			strcpy(pathHead->pathname, arg[2]);
 			pathHead->next = NULL;
 			pathnumber++;
@@ -243,6 +245,8 @@ int dopath(char *cmd, char **arg)
 			}
 			len = sizeof(struct pathlist);
 			tmp->next = (struct pathlist *)malloc(len);
+			len = strlen(arg[2]);
+			tmp->next->pathname = (char *)malloc(sizeof(char)*len);
 			tmp = tmp->next;
 			strcpy(tmp->pathname, arg[2]);
 			tmp->next = NULL;
